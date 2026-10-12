@@ -330,7 +330,7 @@ setLang(savedLang);
  var panes=[].slice.call(document.querySelectorAll('.pane')),lb=document.getElementById('lb');
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
  /* one movement per window: dir along x/y, sign, speed px/s */
- var MODES=[{ax:'x',sg:1,sp:30},{ax:'y',sg:1,sp:26},{ax:'x',sg:-1,sp:34},{ax:'y',sg:-1,sp:30},{ax:'x',sg:1,sp:22},{ax:'x',sg:-1,sp:28}];
+ var MODES=[{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30}];
  var st=panes.map(function(p,pi){
   var items=[].slice.call(p.querySelectorAll('.masonry figure')).map(function(f){return {src:f.querySelector('img').src,a:parseFloat(f.style.getPropertyValue('--a'))||1.5}});
   var g=document.createElement('div');g.className='grid6';p.appendChild(g);if(pi>=3)p.classList.add('fit');
