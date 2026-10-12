@@ -224,7 +224,20 @@
 .lang-switch button{background:none;border:none;padding:4px 2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:rgba(36,31,26,0.45);}
 .lang-switch button.on{color:var(--ink);border-bottom:1px solid var(--clay);}
 .lang-switch span{color:rgba(36,31,26,0.35);}
-.logo-mail{font-family:"IBM Plex Sans",sans-serif;font-size:15px;font-weight:500;letter-spacing:0}.logo:hover .logo-mail{color:var(--clay-2)}</style>
+.logo-mail{font-family:"IBM Plex Sans",sans-serif;font-size:15px;font-weight:500;letter-spacing:0}.logo:hover .logo-mail{color:var(--clay-2)}
+/* --- 6-tile rotating grid, centred --- */
+#work .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.intro .wrap{text-align:center}.intro p{margin:0 auto;text-align:center}
+.tabs{justify-content:center;flex-wrap:wrap;gap:6px 28px;margin:0 0 22px}.tabs .tab{margin-right:0}
+.masonry{display:none!important}
+.grid6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cell{position:relative;aspect-ratio:4/3;overflow:hidden;background:#fff;cursor:zoom-in}
+.cell img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s ease;animation:none!important;transform:none!important}
+.cell img.show{opacity:1}
+.pane.fit .cell{background:#fbfaf6}.pane.fit .cell img{object-fit:contain}
+@media(max-width:560px){.grid6{gap:6px}#work .wrap{padding:0 12px}.tabs{gap:6px 18px}}
+@media(prefers-reduced-motion:reduce){.cell img{transition:none}}
+</style>
 </head>
 <body>
 
@@ -281,7 +294,7 @@
 </footer>
 
 <script>document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.pane').forEach(e=>e.classList.toggle('on',e.dataset.t===b.dataset.t))});
-const lb=document.getElementById('lb');document.querySelectorAll('.masonry img').forEach(i=>i.onclick=()=>{lb.firstChild.src=i.src;lb.classList.add('on')});lb.onclick=()=>lb.classList.remove('on');</script><script>
+const lb=document.getElementById('lb');lb.onclick=()=>lb.classList.remove('on');</script><script>
 const I18N = {
   en: {
     nav_work:"Portfolio", nav_about:"About", nav_contact:"Get in Touch",
@@ -315,5 +328,35 @@ function setLang(lang){
 let savedLang='en';
 try{ savedLang = localStorage.getItem('site_lang') || 'en'; }catch(e){}
 setLang(savedLang);
-</script></body>
+</script><script>
+(function(){
+ var panes=[].slice.call(document.querySelectorAll('.pane')),lb=document.getElementById('lb');
+ var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ var st=panes.map(function(p,pi){
+  var srcs=[].slice.call(p.querySelectorAll('.masonry img')).map(function(i){return i.src});
+  var g=document.createElement('div');g.className='grid6';var cells=[];
+  for(var i=0;i<6;i++){var c=document.createElement('div');c.className='cell';c.innerHTML='<img alt=""><img alt="">';
+   (function(c){c.onclick=function(){var im=c.querySelector('img.show');if(im){lb.firstChild.src=im.src;lb.classList.add('on')}}})(c);
+   g.appendChild(c);cells.push(c)}
+  p.appendChild(g);if(pi>=3)p.classList.add('fit');
+  return {srcs:srcs,cells:cells,tick:0,ready:false};
+ });
+ function paint(s,instant){
+  var n=s.srcs.length;if(!n)return;
+  s.cells.forEach(function(c,i){
+   var off=n>=6?Math.floor(i*n/6):i%n,src=s.srcs[(s.tick+off)%n];
+   var im=c.querySelectorAll('img'),cur=c.querySelector('img.show')||im[1],nx=cur===im[0]?im[1]:im[0];
+   var go=function(){nx.src=src;var done=function(){nx.classList.add('show');if(cur!==nx)cur.classList.remove('show')};
+    if(nx.decode){nx.decode().then(done,done)}else{nx.onload=done}};
+   if(instant)go();else setTimeout(go,i*140);
+  });
+ }
+ function active(){for(var i=0;i<panes.length;i++)if(panes[i].classList.contains('on'))return i;return 0}
+ function show(i){var s=st[i];if(!s.ready){s.ready=true;paint(s,true)}}
+ show(active());
+ document.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){show(+b.dataset.t)})});
+ setInterval(function(){if(document.hidden)return;var s=st[active()];s.tick++;paint(s,false)},reduce?3000:1000);
+})();
+</script>
+</body>
 </html>
