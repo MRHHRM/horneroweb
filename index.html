@@ -330,7 +330,7 @@ setLang(savedLang);
  var panes=[].slice.call(document.querySelectorAll('.pane')),lb=document.getElementById('lb');
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
  /* one movement per window: dir along x/y, sign, speed px/s */
- var MODES=[{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30},{ax:'x',sg:1,sp:30}];
+ var MODES=[{ax:'x',sg:1,sp:22},{ax:'x',sg:1,sp:22},{ax:'x',sg:1,sp:22},{ax:'x',sg:1,sp:22},{ax:'x',sg:1,sp:22},{ax:'x',sg:1,sp:22}];
  var st=panes.map(function(p,pi){
   var items=[].slice.call(p.querySelectorAll('.masonry figure')).map(function(f){return {src:f.querySelector('img').src,a:parseFloat(f.style.getPropertyValue('--a'))||1.5}});
   var g=document.createElement('div');g.className='grid6';p.appendChild(g);if(pi>=3)p.classList.add('fit');
@@ -343,7 +343,7 @@ setLang(savedLang);
    var m=MODES[i],v=m.ax==='y';
    var cell=document.createElement('div');cell.className='cell';
    var track=document.createElement('div');track.className='track'+(v?' v':'');
-   var list=[];for(var k=i;k<n;k+=6)list.push(s.items[k]);      /* this window's own share of the images */
+   var list=s.items.slice(Math.floor(i*n/6),Math.floor((i+1)*n/6));      /* this window's own share of the images */
    if(!list.length)list=[s.items[i%n]];
    var need=function(l){var t=0;l.forEach(function(it){t+=v?1/it.a:it.a});return t};
    var lim=v?1.6:3.4,base=list.slice();
