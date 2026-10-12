@@ -236,6 +236,7 @@
 .track{position:absolute;left:0;top:0;height:100%;display:flex;flex-wrap:nowrap;will-change:transform;backface-visibility:hidden}
 .seq{display:flex;flex:none;height:100%}
 .seq img{display:block;height:100%;width:auto;flex:none;margin-right:6px}
+.track.v{height:auto;width:100%;flex-direction:column}.track.v .seq{flex-direction:column;height:auto;width:100%}.track.v .seq img{width:100%;height:auto;margin:0 0 6px}
 .about-grid{display:block;max-width:760px;margin:0 auto;text-align:center}
 .about-text p{max-width:64ch;margin-left:auto;margin-right:auto}.about-tags{justify-content:center}
 @media(max-width:560px){.grid6{gap:6px}#work .wrap{padding:0 12px}.tabs{gap:6px 18px}}
@@ -327,7 +328,9 @@ setLang(savedLang);
 </script><script>
 (function(){
  var panes=[].slice.call(document.querySelectorAll('.pane')),lb=document.getElementById('lb');
- var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches,SPEED=reduce?0:30;
+ var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+ /* one movement per window: dir along x/y, sign, speed px/s */
+ var MODES=[{ax:'x',sg:1,sp:30},{ax:'y',sg:1,sp:26},{ax:'x',sg:-1,sp:34},{ax:'y',sg:-1,sp:30},{ax:'x',sg:1,sp:22},{ax:'x',sg:-1,sp:28}];
  var st=panes.map(function(p,pi){
   var items=[].slice.call(p.querySelectorAll('.masonry figure')).map(function(f){return {src:f.querySelector('img').src,a:parseFloat(f.style.getPropertyValue('--a'))||1.5}});
   var g=document.createElement('div');g.className='grid6';p.appendChild(g);if(pi>=3)p.classList.add('fit');
@@ -336,22 +339,26 @@ setLang(savedLang);
  });
  function build(s){
   var n=s.items.length;if(!n)return;s.built=true;
-  var K=Math.min(n,Math.max(Math.ceil(n/6),4));
   for(var i=0;i<6;i++){
+   var m=MODES[i],v=m.ax==='y';
    var cell=document.createElement('div');cell.className='cell';
-   var track=document.createElement('div');track.className='track';
-   var start=Math.floor(i*n/6),sum=0,list=[];
-   for(var k=0;k<K;k++){var it=s.items[(start+k)%n];list.push(it);sum+=it.a}
-   while(sum<3.2){list=list.concat(list);sum*=2}
+   var track=document.createElement('div');track.className='track'+(v?' v':'');
+   var list=[];for(var k=i;k<n;k+=6)list.push(s.items[k]);      /* this window's own share of the images */
+   if(!list.length)list=[s.items[i%n]];
+   var need=function(l){var t=0;l.forEach(function(it){t+=v?1/it.a:it.a});return t};
+   var lim=v?1.6:3.4,base=list.slice();
+   while(need(list)<lim)list=list.concat(base);
    for(var c=0;c<2;c++){var seq=document.createElement('div');seq.className='seq';
     list.forEach(function(it){var im=document.createElement('img');im.alt='';im.src=it.src;im.style.aspectRatio=it.a;seq.appendChild(im)});
     track.appendChild(seq)}
    cell.appendChild(track);s.g.appendChild(cell);
-   s.tracks.push({el:track,x:0,half:1,ph:i/6});
+   s.tracks.push({el:track,x:0,half:1,m:m,ph:(i*0.37)%1,first:true});
   }
   measure(s);
  }
- function measure(s){s.tracks.forEach(function(t){var h=t.el.firstChild.offsetWidth||1,first=t.half<=1;t.half=h;if(first)t.x=-h*((t.ph*1.7)%1)})}
+ function measure(s){s.tracks.forEach(function(t){
+  var q=t.el.firstChild,h=(t.m.ax==='y'?q.offsetHeight:q.offsetWidth)||1;t.half=h;
+  if(t.first){t.first=false;t.x=t.m.sg>0?-h*t.ph:-h*(1-t.ph)}})}
  function active(){for(var i=0;i<panes.length;i++)if(panes[i].classList.contains('on'))return i;return 0}
  function show(i){if(!st[i].built)build(st[i])}
  show(active());
@@ -361,8 +368,11 @@ setLang(savedLang);
  function frame(ts){
   var dt=last?Math.min((ts-last)/1000,0.1):0;last=ts;
   var s=st[active()];
-  if(s&&s.built&&!document.hidden&&SPEED)s.tracks.forEach(function(t){
-   t.x+=SPEED*dt;if(t.x>=0)t.x-=t.half;t.el.style.transform='translate3d('+t.x.toFixed(2)+'px,0,0)'});
+  if(s&&s.built&&!document.hidden&&!reduce)s.tracks.forEach(function(t){
+   t.x+=t.m.sg*t.m.sp*dt;
+   if(t.m.sg>0&&t.x>=0)t.x-=t.half;
+   if(t.m.sg<0&&t.x<=-t.half)t.x+=t.half;
+   t.el.style.transform=t.m.ax==='y'?'translate3d(0,'+t.x.toFixed(2)+'px,0)':'translate3d('+t.x.toFixed(2)+'px,0,0)'});
   requestAnimationFrame(frame);
  }
  requestAnimationFrame(frame);
